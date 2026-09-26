@@ -1,4 +1,4 @@
-        let currentTab = 'binarySearch';
+let currentTab = 'binarySearch';
         let timer = null;
         let binarySteps = [];
         let currentStepIdx = 0;
@@ -74,7 +74,7 @@
                     '    }',
                     '}'
                 ]);
-                inputs.innerHTML = `<label class="text-xs text-gray-400">Target Sum:</label><input id="tp-target" type="number" value="15" class="bg-dark-900 border border-dark-700 text-white px-3 py-2 rounded-xl w-20 text-sm focus:outline-none focus:border-indigo-500">`;
+                inputs.innerHTML = `<label class="text-xs text-gray-400">Target Sum:</label><input id="tp-target" type="number" value="26" class="bg-dark-900 border border-dark-700 text-white px-3 py-2 rounded-xl w-20 text-sm focus:outline-none focus:border-indigo-500">`;
                 renderTwoPointers([2, 7, 11, 15, 20, 27], 0, 5);
                 desc.innerText = "Initialized left pointer at start and right pointer at end. Click Start.";
             }
@@ -357,6 +357,26 @@
             }
         }
 
+        // Shared replay helper: shows one pre-computed step per tick
+        function playSteps(steps, renderStep, code, badge, ms) {
+            const desc = document.getElementById('step-description');
+            let idx = 0;
+            const showStep = () => {
+                const st = steps[idx];
+                renderStep(st);
+                setPseudoCode(code, st.line);
+                desc.innerText = st.desc;
+                idx++;
+                if (st.done || idx >= steps.length) {
+                    clearInterval(timer);
+                    badge.innerText = "Completed";
+                    badge.className = "px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-medium";
+                }
+            };
+            showStep();
+            timer = setInterval(showStep, ms);
+        }
+
         function runAlgorithm() {
             clearInterval(timer);
             const badge = document.getElementById('status-badge');
@@ -376,6 +396,200 @@
                         clearInterval(timer);
                     }
                 }, 1400); // 1.4 seconds per step
+            } else if (currentTab === 'binarySearch') {
+                const arr = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91];
+                const target = parseInt(document.getElementById('bs-target').value);
+                const desc = document.getElementById('step-description');
+                const code = [
+                    'function binarySearch(arr, target) {',
+                    '    let left = 0, right = arr.length - 1;',
+                    '    while (left <= right) {',
+                    '        let mid = Math.floor((left + right) / 2);',
+                    '        if (arr[mid] === target) return mid;',
+                    '        else if (arr[mid] < target) left = mid + 1;',
+                    '        else right = mid - 1;',
+                    '    }',
+                    '    return -1;',
+                    '}'
+                ];
+
+                if (Number.isNaN(target)) {
+                    desc.innerText = "Please enter a valid number as the target.";
+                    badge.innerText = "Ready";
+                    badge.className = "px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-xs font-medium";
+                    return;
+                }
+
+                // Pre-compute every step, then replay them on a timer
+                const steps = [];
+                let left = 0, right = arr.length - 1;
+                steps.push({ left, right, mid: -1, line: 1, desc: `Initialized left = 0 and right = ${right}. Searching for ${target}.` });
+                while (left <= right) {
+                    const mid = Math.floor((left + right) / 2);
+                    steps.push({ left, right, mid, line: 3, desc: `mid = floor((${left} + ${right}) / 2) = ${mid}. Checking arr[${mid}] = ${arr[mid]}.` });
+                    if (arr[mid] === target) {
+                        steps.push({ left, right, mid, line: 4, desc: `arr[${mid}] = ${arr[mid]} equals the target ${target}. Found at index ${mid}!`, done: true });
+                        break;
+                    } else if (arr[mid] < target) {
+                        steps.push({ left, right, mid, line: 5, desc: `${arr[mid]} < ${target}, so the target is in the right half. left = ${mid} + 1 = ${mid + 1}.` });
+                        left = mid + 1;
+                    } else {
+                        steps.push({ left, right, mid, line: 6, desc: `${arr[mid]} > ${target}, so the target is in the left half. right = ${mid} - 1 = ${mid - 1}.` });
+                        right = mid - 1;
+                    }
+                    if (left > right) {
+                        steps.push({ left, right, mid: -1, line: 8, desc: `left (${left}) > right (${right}). The search window is empty, so ${target} is not in the array. Returns -1.`, done: true });
+                    }
+                }
+
+                let idx = 0;
+                const showStep = () => {
+                    const st = steps[idx];
+                    renderBinarySearch(arr, st.left, st.right, st.mid);
+                    setPseudoCode(code, st.line);
+                    desc.innerText = st.desc;
+                    idx++;
+                    if (st.done || idx >= steps.length) {
+                        clearInterval(timer);
+                        badge.innerText = "Completed";
+                        badge.className = "px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-medium";
+                    }
+                };
+                showStep();
+                timer = setInterval(showStep, 1400);
+            } else if (currentTab === 'twoPointers') {
+                const arr = [2, 7, 11, 15, 20, 27];
+                const target = parseInt(document.getElementById('tp-target').value);
+                const desc = document.getElementById('step-description');
+                const code = [
+                    'function twoSumSorted(arr, target) {',
+                    '    let left = 0, right = arr.length - 1;',
+                    '    while (left < right) {',
+                    '        let sum = arr[left] + arr[right];',
+                    '        if (sum === target) return [left, right];',
+                    '        else if (sum < target) left++;',
+                    '        else right--;',
+                    '    }',
+                    '}'
+                ];
+
+                if (Number.isNaN(target)) {
+                    desc.innerText = "Please enter a valid number as the target sum.";
+                    badge.innerText = "Ready";
+                    badge.className = "px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-xs font-medium";
+                    return;
+                }
+
+                // Pre-compute every step, then replay them on a timer
+                const steps = [];
+                let left = 0, right = arr.length - 1;
+                steps.push({ left, right, line: 1, desc: `Initialized left = 0 and right = ${right}. Looking for a pair that sums to ${target}.` });
+                let found = false;
+                while (left < right) {
+                    const sum = arr[left] + arr[right];
+                    steps.push({ left, right, line: 3, desc: `sum = arr[${left}] + arr[${right}] = ${arr[left]} + ${arr[right]} = ${sum}.` });
+                    if (sum === target) {
+                        steps.push({ left, right, line: 4, desc: `${sum} equals the target ${target}. Found the pair at indices [${left}, ${right}]!`, done: true });
+                        found = true;
+                        break;
+                    } else if (sum < target) {
+                        steps.push({ left, right, line: 5, desc: `${sum} < ${target}, so the sum is too small. Move left pointer right: left = ${left + 1}.` });
+                        left++;
+                    } else {
+                        steps.push({ left, right, line: 6, desc: `${sum} > ${target}, so the sum is too big. Move right pointer left: right = ${right - 1}.` });
+                        right--;
+                    }
+                }
+                if (!found) {
+                    steps.push({ left, right, line: 7, desc: `Pointers met (left = ${left}, right = ${right}). No two numbers sum to ${target}.`, done: true });
+                }
+
+                let idx = 0;
+                const showStep = () => {
+                    const st = steps[idx];
+                    renderTwoPointers(arr, st.left, st.right);
+                    setPseudoCode(code, st.line);
+                    desc.innerText = st.desc;
+                    idx++;
+                    if (st.done || idx >= steps.length) {
+                        clearInterval(timer);
+                        badge.innerText = "Completed";
+                        badge.className = "px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-medium";
+                    }
+                };
+                showStep();
+                timer = setInterval(showStep, 1400);
+            } else if (currentTab === 'slidingWindow') {
+                const arr = [2, 1, 5, 1, 3, 2];
+                const k = parseInt(document.getElementById('sw-k').value);
+                const desc = document.getElementById('step-description');
+                const code = [
+                    'function maxSumSubarray(arr, k) {',
+                    '    let maxSum = 0, windowSum = 0;',
+                    '    for(let i=0; i<k; i++) windowSum += arr[i];',
+                    '    maxSum = windowSum;',
+                    '    for(let i=k; i<arr.length; i++) {',
+                    '        windowSum += arr[i] - arr[i-k];',
+                    '        maxSum = Math.max(maxSum, windowSum);',
+                    '    }',
+                    '}'
+                ];
+
+                if (Number.isNaN(k) || k < 1 || k > arr.length) {
+                    desc.innerText = `Please enter a window size (k) between 1 and ${arr.length}.`;
+                    badge.innerText = "Ready";
+                    badge.className = "px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-xs font-medium";
+                    return;
+                }
+
+                const steps = [];
+                let windowSum = 0;
+                for (let i = 0; i < k; i++) windowSum += arr[i];
+                let maxSum = windowSum, bestStart = 0;
+                steps.push({ start: 0, line: 2, desc: `Sum the first window of size ${k}: [${arr.slice(0, k).join(', ')}] = ${windowSum}.` });
+                steps.push({ start: 0, line: 3, desc: `maxSum = windowSum = ${maxSum}.` });
+                for (let i = k; i < arr.length; i++) {
+                    const start = i - k + 1;
+                    const next = windowSum + arr[i] - arr[i - k];
+                    steps.push({ start, line: 5, desc: `Slide right: add arr[${i}] (${arr[i]}), remove arr[${i - k}] (${arr[i - k]}). windowSum = ${windowSum} + ${arr[i]} - ${arr[i - k]} = ${next}.` });
+                    windowSum = next;
+                    if (windowSum > maxSum) { maxSum = windowSum; bestStart = start; }
+                    steps.push({ start, line: 6, desc: `maxSum = max(previous best, ${windowSum}) = ${maxSum}.` });
+                }
+                steps.push({ start: bestStart, line: 7, desc: `Done. Maximum sum of any ${k} consecutive elements is ${maxSum}, from [${arr.slice(bestStart, bestStart + k).join(', ')}] at index ${bestStart}.`, done: true });
+
+                playSteps(steps, st => renderSlidingWindow(arr, k, st.start), code, badge, 1400);
+            } else if (currentTab === 'backtracking') {
+                const nums = [1, 2, 3];
+                const code = [
+                    'function backtrack(start, path, nums) {',
+                    '    res.push([...path]);',
+                    '    for (let i = start; i < nums.length; i++) {',
+                    '        path.push(nums[i]);',
+                    '        backtrack(i + 1, path, nums);',
+                    '        path.pop(); // backtrack',
+                    '    }',
+                    '}'
+                ];
+
+                const steps = [];
+                const res = [];
+                const fmt = p => '[' + p.join(', ') + ']';
+                const backtrack = (start, path) => {
+                    res.push([...path]);
+                    steps.push({ path: [...path], msg: 'Save subset', line: 1, desc: `Saved subset ${fmt(path)}. Total subsets so far: ${res.length}.` });
+                    for (let i = start; i < nums.length; i++) {
+                        path.push(nums[i]);
+                        steps.push({ path: [...path], msg: `Choose ${nums[i]}`, line: 3, desc: `Choose ${nums[i]}, path is now ${fmt(path)}. Recurse with start = ${i + 1}.` });
+                        backtrack(i + 1, path);
+                        const removed = path.pop();
+                        steps.push({ path: [...path], msg: `Backtrack: remove ${removed}`, line: 5, desc: `Backtrack: remove ${removed}, path returns to ${fmt(path)}.` });
+                    }
+                };
+                backtrack(0, []);
+                steps.push({ path: [], msg: `All ${res.length} subsets generated`, line: 7, desc: `Done. ${res.length} subsets: ${res.map(fmt).join(', ')}.`, done: true });
+
+                playSteps(steps, st => renderBacktracking(st.path, st.msg), code, badge, 1000);
             } else {
                 // Other tabs basic run handler
                 badge.innerText = "Completed";
